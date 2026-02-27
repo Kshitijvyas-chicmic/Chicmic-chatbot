@@ -2,68 +2,57 @@ import httpx
 
 def register_leave_application(mcp):
     @mcp.tool()
-    async def leave_application(auth_token, request_data):
-        """  
-        This tool retrieves leave application records from the ERP system.
-
-Use this tool when the user asks about:
-- Leave details of other employees
-- Leave history of other employees
-- leave applications of other employees
-- Employee leave records
-- Leave status of other employees
-- Leave for a specific year of other employees
-- Leave between specific dates of other employees
-
-The tool returns formatted leave application data containing:
-
-- Employee Name
-- Team
-- Reporting To
-- Leave Type
-- Reason
-- From Date
-- To Date
-- Total Days
-- Actual Days
-- Half Days
-- Waiver Applied
-- Waiver Dates
-- Sandwich Applied
-- Status
-- Send To
-- Mail To
-- Year
-
-        args:
-        - auth_token: The authentication token for API access.
-        - request_data: The request data containing necessary parameters for the API call.
+    async def leave_application(auth_token, request_data, employee_name="", status=""):
         """
+Fetches leave applications of other employees.
 
-        LEAVE_APPLICATION_API_URL = f"https://erp-staging.projectlabs.in/v1/leave/requests"
+Use for queries about: employee leave history, leave status, leave between dates, or leave records by year.
+
+Filters supported:
+- employee_name
+- status (Pending/Approved/Rejected/Cancelled)
+
+Param: auth_token (required), request_data (required), others optional.
+"""
+
+        LEAVE_APPLICATION_API_URL = "https://api.portal.chicmicstudios.in/v1/leave/requests"
 
         headers = {
-                "Authorization": auth_token,
-                "Content-Type": "application/json"
-            }
-            
+            "Authorization": auth_token,
+            "Content-Type": "application/json"
+        }
+
+        index = 0
+        limit = 10
+        all_leave_applications = []
+
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(LEAVE_APPLICATION_API_URL, headers=headers, json={"index":request_data["index"],"limit":request_data["limit"]})
+                while True:
+                    response = await client.post(
+                        LEAVE_APPLICATION_API_URL,
+                        headers=headers,
+                        json={"index": index, "limit": limit}
+                    )
 
-                if response.status_code == 401:
-                    return "Unauthorized access. Please login again."
+                    if response.status_code == 401:
+                        return "Unauthorized access. Please login again."
 
-                if response.status_code == 403:
-                    return "You are not authorized to access this information."
+                    if response.status_code == 403:
+                        return "You are not authorized to access this information."
 
-                if response.status_code != 200:
-                    return f"Error: Received {response.status_code} from API."
+                    if response.status_code != 200:
+                        return f"Error: Received {response.status_code} from API."
 
-                leave_applications = response.json().get("data", {}).get("data", [])
+                    leave_batch = response.json().get("data", {}).get("data", [])
 
+                    if not leave_batch:
+                        break
 
-                if not leave_applications:
+                    all_leave_applications.extend(leave_batch)
+                    index += 10
+
+                if not all_leave_applications:
                     return "No leave applications found."
 
                 STATUS_MAP = {
@@ -73,9 +62,31 @@ The tool returns formatted leave application data containing:
                     4: "Cancelled"
                 }
 
+                # Normalize status filter
+                status = status.strip().lower()
+                valid_status_map = {
+                    "pending": 1,
+                    "approved": 2,
+                    "rejected": 3,
+                    "cancelled": 4
+                }
+
                 formatted_leaves = []
 
-                for leave in leave_applications:
+                for leave in all_leave_applications:
+
+                    # Filter by employee_name if provided
+                    if employee_name:
+                        if employee_name.lower() not in (leave.get("employeeFullName") or "").lower():
+                            continue
+
+                    # Filter by status if provided
+                    if status:
+                        if status not in valid_status_map:
+                            continue
+                        if leave.get("status") != valid_status_map[status]:
+                            continue
+
                     leave_reason = leave.get("leaveReason", {})
                     send_to = ", ".join([u.get("employeeFullName", "") for u in leave.get("sendTo", [])])
                     mail_to = ", ".join([u.get("employeeFullName", "") for u in leave.get("mailTo", [])])
@@ -100,8 +111,10 @@ The tool returns formatted leave application data containing:
                         f"Year: {leave.get('year')}\n"
                     )
 
+                if not formatted_leaves:
+                    return "No leave applications found."
+
                 return "\n\n".join(formatted_leaves)
 
             except httpx.RequestError as e:
                 return f"An error occurred while requesting the API: {str(e)}"
-

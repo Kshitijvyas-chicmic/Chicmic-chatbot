@@ -4,27 +4,22 @@ from utils.format_date import normalize_date
 
 def register_punch_tool(mcp):
   @mcp.tool()
-  async def punch_in_out(auth_token, request_data, date):
+  async def punch_in_out(auth_token, request_data, date=datetime.today().strftime('%d-%m-%Y')):
 
       """
-    Use this tool when the user asks ONLY about:
-    - Punch in or punch out time
-    - Device punch records
-    - From which device or floor the punch was recorded
-    - Direction of punch (IN / OUT)
-    Note: This tool does not provide the office timing of the user. It only tells the timing when user came/punched in to office. Office timing may be different from punch in time.
+Fetches employee punch in/out records for a specific date.
 
-  INSTRUCTIONS:
-    - If year is not mentioned in user's query, DO NOT ASSUME year. Just provide date without year.
+Use for queries about: punch time, punch direction (IN/OUT), device name, or floor of punch.
 
-  STRICT RULES:
-    - If no year is mentioned in date, Do NOT assume the year.
+Rules:
+- Do NOT assume year if not mentioned.
+- If date not provided in query, use request_data["date"].
 
-  args:
-  - auth_token
-  - request_data
-  - date: provided by user in the query, if no date is mentioned in the query take date from request_data argument
-      """
+Params:
+- auth_token (required)
+- request_data (must contain empId, optionally date)
+- date (optional, user-provided)
+"""
 
       PUNCH_IN_OUT_URL="https://api.portal.chicmicstudios.in/v1/biometric/punches"
 
@@ -33,7 +28,6 @@ def register_punch_tool(mcp):
           "Content-Type": "application/json"
         }
 
-      display_date_full = "today"
       display_date_short = "today"
 
       try:
@@ -57,7 +51,7 @@ def register_punch_tool(mcp):
               f"punched {punch.get('devDirection')} on date : {datetime.fromisoformat(punch.get('attPunchDownDate').replace('Z', '+00:00')).strftime('%d %B %Y, %I:%M %p')} or {display_date_short} or {final_date}\n"
               f"punched at : {punch.get('deviceName')}\n"
               
-              for punch in punch_data
+              for punch in punch_data if datetime.fromisoformat(punch.get('attPunchDownDate').replace('Z', '+00:00')).strftime('%d-%m-%Y') == final_date 
             ])
             
           except Exception as e:

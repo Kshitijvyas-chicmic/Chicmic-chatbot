@@ -1,9 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 from langchain_ollama import OllamaEmbeddings
-import os
-import httpx
 from vector_data import vector_store
-from datetime import datetime, timedelta, timezone
 from tools.attendance import register_attendance
 from tools.holidays import register_holidays
 from tools.project_details import register_project
@@ -23,29 +20,42 @@ from tools.learningRD import register_learning_tool
 from tools.meeting_task import register_meeting_tool
 from tools.it_task import register_it_task_tool
 from tools.presentation import register_presentation_tool
-# import redis.asyncio as redis
-
-# Redis connection
-# redis_client = redis.Redis(
-#     host="localhost",
-#     port=6379,
-#     decode_responses=True,
-#     max_connections=10
-# )
-
-# async def get_cached_or_search(cache_key, search_fn, ttl=300):
-
-#     cached = await redis_client.get(cache_key)
-#     if cached:
-#         return f"(cached)\n{cached}"
-
-
-#     result = await search_fn()
-
-#     await redis_client.set(cache_key, result, ex=ttl)
-#     return result
-
-
+from tools.late_come import register_late_arrival_requests
+from tools.manual_hours import register_manual_hour_requests
+from tools.my_late_come import register_my_late_come_requests
+from tools.employee_timesheet import register_timesheet_summary_tool
+from tools.my_estimate_task import register_estimate_task
+from tools.employee_manual import register_manual_hours_request_tool
+from tools.sales_partener import register_sales_partner_tool
+from tools.my_it_assets import register_user_assets
+from tools.it_assets import register_asset_list
+from tools.awards import register_award_list
+from tools.recruitment_status import register_recruitment_report
+from tools.screening_request import register_screening_request
+from tools.all_users import register_organisation_users
+from tools.human_resources import register_manage_resource
+from tools.manage_roles import register_management_roles
+from tools.management_designation import register_management_designations
+from tools.management_permission import register_management_permission
+from tools.management_skill import register_management_skills
+from tools.project_approval import register_approval_project_list
+from tools.upwork_list import register_management_upwork_ids
+from tools.in_out_others import register_in_out_others
+from tools.wfh_employees import register_wfh_list
+from tools.relexation import register_relaxation_sheet
+from tools.campus_placement import register_campus_placement_list
+from tools.training_approved_course import register_training_course
+from tools.trainee_list import register_training_trainee_list
+from tools.leave_sheet import register_leave_sheet
+from tools.resignations import register_resignations
+from tools.blacklisted_clients import register_blacklisted_clients
+from tools.session_list import register_training_session_list
+from tools.trainee_test import register_training_test_list
+from tools.trainee_sample import register_training_sample_code
+from tools.trainee_feedback import register_training_feedback_history
+from tools.sales_direct_msg import register_sales_direct_messages
+from tools.sales_bids import register_sales_bid_list
+from tools.sales_estimate_list import register_sales_estimate_list
 mcp = FastMCP("Company Assistant")
 
 register_user_profile(mcp)
@@ -67,6 +77,44 @@ register_learning_tool(mcp)
 register_meeting_tool(mcp)
 register_it_task_tool(mcp)
 register_presentation_tool(mcp)
+register_late_arrival_requests(mcp)
+register_manual_hour_requests(mcp)
+register_my_late_come_requests(mcp)
+register_timesheet_summary_tool(mcp)
+register_estimate_task(mcp)
+register_manual_hours_request_tool(mcp)
+register_sales_partner_tool(mcp)
+register_user_assets(mcp)
+register_asset_list(mcp)
+register_award_list(mcp)
+register_recruitment_report(mcp)
+register_screening_request(mcp)
+register_wfh_list(mcp)
+# register_relaxation_sheet(mcp)
+# register_campus_placement_list(mcp)
+register_training_course(mcp)
+# register_training_trainee_list(mcp)
+# register_manage_resource(mcp)
+# register_management_roles(mcp)
+# register_management_designations(mcp)
+# register_management_skills(mcp)
+# register_management_permission(mcp)
+# register_management_skills(mcp)
+# register_management_roles(mcp)
+# register_organisation_users(mcp)
+# register_in_out_others(mcp)
+register_approval_project_list(mcp)
+# register_management_upwork_ids(mcp)
+# register_leave_sheet(mcp)
+# register_resignations(mcp)
+# register_blacklisted_clients(mcp)
+# register_training_session_list(mcp)
+# register_training_test_list(mcp)
+# register_training_sample_code(mcp)
+# register_training_feedback_history(mcp)
+# register_sales_direct_messages(mcp)
+# register_sales_bid_list(mcp)
+# register_sales_estimate_list(mcp)
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
                
 
